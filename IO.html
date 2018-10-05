@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>IO</title>
+</head>
+<body>
+  <body>
+    <div id="myDiv">I am some inner html</div>
+  </body>
+  <script>
+  const compose = (...fns) => (...args) => fns.reduceRight((res, fn) => [fn.call(null, ...res)], args)[0];
+  const curry = function (fn) {
+    const arity = fn.length;
+
+    return function $curry (...args) {
+
+      if (args.length < arity) {
+        return $curry.bind(null, ...args);
+      }
+
+      return fn.call(null, ...args);
+    }
+  }
+
+  const prop = curry((prop, obj) => obj[prop]);
+  const split = curry((sep, str) => str.split(sep));
+  const filter = curry((fn, xs) => xs.filter(fn));
+  const map = curry((fn, xs) => xs.map(fn));
+  const eq = curry((a, b) => a === b);
+  
+  const head = xs => xs[0];
+  const last = xs => xs[xs.length -1]; 
+  
+  class Maybe {
+      static of(x) {
+          return new Maybe(x);
+      }
+      
+      get isNothing() {
+          return this.$value === null || this.$value === undefined;
+      }
+
+      constructor(x) {
+          this.$value = x;
+      }
+      map(fn) {
+          return this.isNothing ? this : Maybe.of(fn(this.$value))
+      }
+      inspect() {
+          return this.isNothing ? 'Nothing' : `Just(${inspect(this.$value)})`;
+      }
+  }
+
+  class IO {
+      constructor(fn) {
+          this.$value = fn;
+      }
+
+      map(fn) {
+          return new IO(compose(fn, this.$value));
+      }
+
+      inspect() {
+          return `IO(${this.$value})`
+      }
+  }
+  
+  var mapF = (f, Functor) => Functor.map(f);
+  const ioWindow = new IO(() => window);
+  
+  const result1 = ioWindow.map(win => win.innerWidth);
+  console.log('val1', result1.$value());
+  
+  const result2 = ioWindow.map(prop('location'))
+          .map(prop('href'))
+          .map(split('/'));
+  console.log('val2', result2.$value());
+  
+  const $ = selector => new IO(() => document.querySelectorAll(selector));
+  const result3 = $('#myDiv').map(head).map(div => div.innerHTML)
+  console.log('val3', result3.$value());  
+
+  const url = new IO(() => window.location.href);
+  const toPairs = compose(map(split('=')), split('&'));
+  const params = compose(toPairs, last, split('?'));
+  
+  const findParam = key => mapF(compose(Maybe.of, filter(compose(eq(key), head)), params), url);
+
+  const result4 = findParam('searchTerm');
+  console.log('val4', result4.$value());
+
+  </script> 
+</body>
+</html>
