@@ -1,32 +1,32 @@
-// class Either {
-//     static of(x) {
-//         return new Right(x);
-//     }
+class Either {
+    static of(x) {
+        return new Right(x);
+    }
 
-//     constructor(x) {
-//         this.$value = x;
-//     }
-// }
+    constructor(x) {
+        this.$value = x;
+    }
+}
 
-// class Left extends Either {
-//     map(f) {
-//         return this;
-//     }
-//     inspect() {
-//         return `Left(${inspect(this.$value)})`
-//     }
-// }
+class Left extends Either {
+    map(f) {
+        return this;
+    }
+    inspect() {
+        return `Left(${this.$value})`
+    }
+}
 
-// class Right extends Either {
-//     map(f) {
-//         return Either.of(f(this.$value));
-//     }
-//     inspect() {
-//         return `Right(${inspect(this.$value)})`
-//     }
-// }
+class Right extends Either {
+    map(f) {
+        return Either.of(f(this.$value));
+    }
+    inspect() {
+        return `Right(${this.$value})`
+    }
+}
 
-// const left = x => new Left(x);
+const left = x => new Left(x);
 
 // const ins = Either.of('rain').map(str => `b${str}`);
 // console.log(ins)
@@ -44,6 +44,9 @@ const curry = function(fn) {
 
 const prop = curry((prop, obj) => obj[prop]);
 const concat = curry((a, b) => a.concat(b));
+const toUpperCase = str => str.toUpperCase();
+
+const map = curry((f, Functor) => Functor.map(f));
 
 class Container {
     constructor(x) {
@@ -68,3 +71,7 @@ const result3 = Container.of('bombs').map(concat('away')).map(prop('length'))
 console.log('result1', result1);
 console.log('result2', result2);
 console.log('result3', result3);
+
+const nested = Container.of([Either.of('pillows'), left('no sleep for you')]);
+const result4 = map(map(map(toUpperCase)), nested);
+console.log('result4', result4);
